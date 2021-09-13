@@ -35,9 +35,10 @@ pub fn get_yt_info(url: &str) -> Result<Value, Error> {
 }
 
 pub fn get_yt_multi_info(url: &str) -> Result<Vec<Value>, Error> {
-    let output = Command::new("bash")
-        .arg("-c")
-        .arg(format!("youtube-dl --skip-download --print-json '{}'", url))
+    let output = Command::new("youtube-dl")
+        .arg("--skip-download")
+        .arg("--print-json")
+        .arg(url)
         .output()?;
 
     let stdout = String::from_utf8(output.stdout)?;

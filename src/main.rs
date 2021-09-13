@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use crate::yt2mp3::errors;
 use crate::yt2mp3::errors::Error;
-use crate::yt2mp3::tools::apply_sed_expression;
+use crate::yt2mp3::tools::{apply_sed_expression, apply_id3tool};
 use crate::yt2mp3::youtube;
 use crate::yt2mp3::youtube::{Playlist, Video};
 
@@ -25,6 +25,19 @@ fn run(matches: ArgMatches) -> Result<(), Error> {
         let album = apply_sed_expression(album_sed, &sed_input)?;
         let artist = apply_sed_expression(artist_sed, &sed_input)?;
 
+        let file_name = format!("{}.mp3", video.id);
+
+        println!("Downloading mp3 file {}", file_name);
+        video.download_mp3()?;
+
+        println!("Setting metadata of {}", file_name);
+        println!("\tTitle: {}", title);
+        println!("\tAlbum: {}", album);
+        println!("\tArtist: {}", artist);
+
+        apply_id3tool(&file_name, &title, &artist, &album)?;
+
+        println!("OK\n");
 
     }
     Ok(())
@@ -55,12 +68,14 @@ fn main() {
             .takes_value(true)
             .default_value("s/^.+__.+__(.+)$/\\1/"))
         .arg(Arg::new("artist")
+            .short('r')
             .long("artist")
             .value_name("artist")
             .about("Sed expression for evaluating mp3 artist. Input format: 'ID__CHANNEL__TITLE'")
             .takes_value(true)
             .default_value("s/^.+__(.+)__.+$/\\1/"))
         .arg(Arg::new("album")
+            .short('a')
             .long("album")
             .value_name("album")
             .about("Sed expression for evaluating mp3 album. Input format: 'ID__CHANNEL__TITLE'")
