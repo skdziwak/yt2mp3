@@ -20,9 +20,10 @@ pub struct Playlist {
 }
 
 pub fn get_yt_info(url: &str) -> Result<Value, Error> {
-    let output = Command::new("bash")
-        .arg("-c")
-        .arg(format!("youtube-dl --skip-download --print-json '{}'", url))
+    let output = Command::new("youtube-dl")
+        .arg("--skip-download")
+        .arg("--print-json")
+        .arg(url)
         .output()?;
 
     let stdout = String::from_utf8(output.stdout)?;
@@ -87,7 +88,7 @@ impl Video {
             Ok(())
         } else {
             Err(Error::from(stderr))
-        }
+        };
     }
 
     pub fn to_sed_input_string(&self) -> String {
@@ -110,8 +111,8 @@ impl Playlist {
         for value in values {
             let video = video_from_playlist_value(value);
             match video {
-                Ok(video) => {videos.push(video);}
-                Err(error) => {eprintln!("WARNING: Unable to read video data.\n{}", error.to_string())}
+                Ok(video) => { videos.push(video); }
+                Err(error) => { eprintln!("WARNING: Unable to read video data.\n{}", error.to_string()) }
             }
         }
         Ok(Playlist { videos })

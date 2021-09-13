@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use crate::yt2mp3::errors;
 use crate::yt2mp3::errors::Error;
-use crate::yt2mp3::tools::{apply_sed_expression, apply_id3tool};
+use crate::yt2mp3::tools::{apply_id3tool, apply_sed_expression};
 use crate::yt2mp3::youtube;
 use crate::yt2mp3::youtube::{Playlist, Video};
 
@@ -41,13 +41,16 @@ fn run(matches: ArgMatches) -> Result<(), Error> {
     let artist_sed = matches.value_of("artist").unwrap();
     if matches.is_present("video") {
         let url = matches.value_of("video").unwrap();
+        println!("Fetching video data");
         let video = Video::from_url(url)?;
-        process_video(&video, title_sed, artist_sed, artist_sed);
+        println!("Downloading video {}", video.id);
+        process_video(&video, title_sed, album_sed, artist_sed)?;
     } else if matches.is_present("playlist") {
         let url = matches.value_of("playlist").unwrap();
         println!("Fetching playlist data");
         let playlist = Playlist::from_url(url)?;
         for video in &playlist.videos {
+            println!("Downloading video {}", video.id);
             match process_video(video, title_sed, album_sed, artist_sed) {
                 Ok(_) => {}
                 Err(error) => {
@@ -65,7 +68,7 @@ fn main() {
         .author("Szymon Dziwak <skdziwak@gmail.com>")
         .about("Downloads mp3 files from YouTube using youtube-dl. Allows customizing mp3 metadata.")
         .arg(Arg::new("playlist")
-            .short('c')
+            .short('p')
             .long("playlist")
             .value_name("playlist")
             .about("YouTube playlist link")
@@ -99,7 +102,9 @@ fn main() {
             .default_value("s/^.+$/NO ALBUM/"))
         .get_matches();
     match run(matches) {
-        Ok(_) => {}
+        Ok(_) => {
+            println!("Done.");
+        }
         Err(error) => {
             eprintln!("{}", error.to_string());
         }
