@@ -12,6 +12,29 @@ use crate::yt2mp3::youtube::{Playlist, Video};
 
 pub mod yt2mp3;
 
+fn process_video(video: &Video, title_sed: &str, album_sed: &str, artist_sed: &str) -> Result<(), Error> {
+    let sed_input = video.to_sed_input_string();
+
+    let title = apply_sed_expression(title_sed, &sed_input)?;
+    let album = apply_sed_expression(album_sed, &sed_input)?;
+    let artist = apply_sed_expression(artist_sed, &sed_input)?;
+
+    let file_name = format!("{}.mp3", video.id);
+
+    println!("Downloading mp3 file {}", file_name);
+    video.download_mp3()?;
+
+    println!("Setting metadata of {}", file_name);
+    println!("\tTitle: {}", title);
+    println!("\tAlbum: {}", album);
+    println!("\tArtist: {}", artist);
+
+    apply_id3tool(&file_name, &title, &artist, &album)?;
+
+    println!("OK\n");
+    Ok(())
+}
+
 fn run(matches: ArgMatches) -> Result<(), Error> {
     let title_sed = matches.value_of("title").unwrap();
     let album_sed = matches.value_of("album").unwrap();
@@ -19,26 +42,19 @@ fn run(matches: ArgMatches) -> Result<(), Error> {
     if matches.is_present("video") {
         let url = matches.value_of("video").unwrap();
         let video = Video::from_url(url)?;
-        let sed_input = video.to_sed_input_string();
-
-        let title = apply_sed_expression(title_sed, &sed_input)?;
-        let album = apply_sed_expression(album_sed, &sed_input)?;
-        let artist = apply_sed_expression(artist_sed, &sed_input)?;
-
-        let file_name = format!("{}.mp3", video.id);
-
-        println!("Downloading mp3 file {}", file_name);
-        video.download_mp3()?;
-
-        println!("Setting metadata of {}", file_name);
-        println!("\tTitle: {}", title);
-        println!("\tAlbum: {}", album);
-        println!("\tArtist: {}", artist);
-
-        apply_id3tool(&file_name, &title, &artist, &album)?;
-
-        println!("OK\n");
-
+        process_video(&video, title_sed, artist_sed, artist_sed);
+    } else if matches.is_present("playlist") {
+        let url = matches.value_of("playlist").unwrap();
+        println!("Fetching playlist data");
+        let playlist = Playlist::from_url(url)?;
+        for video in &playlist.videos {
+            match process_video(video, title_sed, album_sed, artist_sed) {
+                Ok(_) => {}
+                Err(error) => {
+                    eprintln!("{}", error.to_string());
+                }
+            }
+        }
     }
     Ok(())
 }
