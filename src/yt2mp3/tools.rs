@@ -1,4 +1,4 @@
-use std::io::{Read, Write};
+use std::io::Write;
 use std::process::{Command, Stdio};
 
 use crate::errors::Error;
@@ -15,8 +15,8 @@ pub fn apply_sed_expression<S: Into<String>, D: Into<String>>(sed: S, input: D) 
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    let mut stdin = cmd.stdin.as_mut().ok_or(Error::from("Cannot get stdin."))?;
-    stdin.write_all(&*input_b);
+    let stdin = cmd.stdin.as_mut().ok_or(Error::from("Cannot get stdin."))?;
+    stdin.write_all(&*input_b)?;
     let output = cmd.wait_with_output()?;
     let error = String::from_utf8(output.stderr)?;
     if error.is_empty() {

@@ -1,4 +1,3 @@
-use std::f32::consts::E;
 use std::string::FromUtf8Error;
 
 pub struct Error(pub String);

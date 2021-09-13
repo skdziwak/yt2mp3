@@ -1,13 +1,8 @@
-use std::io::Write;
-use std::process::{Command, Stdio};
-
 use clap::{App, Arg, ArgMatches};
-use serde_json::Value;
 
 use crate::yt2mp3::errors;
 use crate::yt2mp3::errors::Error;
 use crate::yt2mp3::tools::{apply_id3tool, apply_sed_expression};
-use crate::yt2mp3::youtube;
 use crate::yt2mp3::youtube::{Playlist, Video};
 
 pub mod yt2mp3;
