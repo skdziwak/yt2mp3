@@ -88,6 +88,10 @@ impl Video {
             Err(Error::from(stderr))
         }
     }
+
+    pub fn to_sed_input_string(&self) -> String {
+        format!("{}__{}__{}", self.id, self.channel, self.title)
+    }
 }
 
 fn video_from_playlist_value(value: Value) -> Result<Video, Error> {

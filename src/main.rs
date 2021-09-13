@@ -1,14 +1,34 @@
-pub mod yt2mp3;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
+use clap::{App, Arg, ArgMatches};
 use serde_json::Value;
+
 use crate::yt2mp3::errors;
-use crate::yt2mp3::youtube;
-use crate::yt2mp3::youtube::{Video, Playlist};
 use crate::yt2mp3::errors::Error;
 use crate::yt2mp3::tools::apply_sed_expression;
-use std::process::{Command, Stdio};
-use std::io::Write;
-use clap::{App, Arg};
+use crate::yt2mp3::youtube;
+use crate::yt2mp3::youtube::{Playlist, Video};
+
+pub mod yt2mp3;
+
+fn run(matches: ArgMatches) -> Result<(), Error> {
+    let title_sed = matches.value_of("title").unwrap();
+    let album_sed = matches.value_of("album").unwrap();
+    let artist_sed = matches.value_of("artist").unwrap();
+    if matches.is_present("video") {
+        let url = matches.value_of("video").unwrap();
+        let video = Video::from_url(url)?;
+        let sed_input = video.to_sed_input_string();
+
+        let title = apply_sed_expression(title_sed, &sed_input)?;
+        let album = apply_sed_expression(album_sed, &sed_input)?;
+        let artist = apply_sed_expression(artist_sed, &sed_input)?;
+
+
+    }
+    Ok(())
+}
 
 fn main() {
     let matches = App::new("yt2mp3")
@@ -33,13 +53,13 @@ fn main() {
             .value_name("title")
             .about("Sed expression for evaluating mp3 title. Input format: 'ID__CHANNEL__TITLE'")
             .takes_value(true)
-            .default_value("s/^.+__.+__(.+)$/$1/"))
-    .arg(Arg::new("artist")
+            .default_value("s/^.+__.+__(.+)$/\\1/"))
+        .arg(Arg::new("artist")
             .long("artist")
             .value_name("artist")
             .about("Sed expression for evaluating mp3 artist. Input format: 'ID__CHANNEL__TITLE'")
             .takes_value(true)
-            .default_value("s/^.+__(.+)__.+$/$1/"))
+            .default_value("s/^.+__(.+)__.+$/\\1/"))
         .arg(Arg::new("album")
             .long("album")
             .value_name("album")
@@ -47,15 +67,10 @@ fn main() {
             .takes_value(true)
             .default_value("s/^.+$/NO ALBUM/"))
         .get_matches();
-    // let playlist = youtube::Playlist::from_url("https://www.youtube.com/watch?v=w2yiK8xG_H8&list=OLAK5uy_luDy14PAkxNmVduDD-vUojQpWikN7OM44");
-    // match playlist {
-    //     Ok(playlist) => {
-    //         for video in playlist.videos {
-    //             println!("{}", video.download_mp3().is_ok())
-    //         }
-    //     }
-    //     Err(err) => {
-    //         eprintln!("{}", err.to_string())
-    //     }
-    // }
+    match run(matches) {
+        Ok(_) => {}
+        Err(error) => {
+            eprintln!("{}", error.to_string());
+        }
+    }
 }
