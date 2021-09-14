@@ -39,3 +39,8 @@ Output metadata:<br>
 Title: [SONG_NAME]<br>
 Artist: [ARTIST]<br>
 Album: NO_ALBUM
+
+## External dependencies
+* sed
+* id3tool
+* youtube-dl
